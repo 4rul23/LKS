@@ -80,7 +80,8 @@ export default function UserDashboardPage() {
           <nav className="space-y-2 mb-6">
             {[
               { name: 'dashboard', label: 'Dashboard', icon: '🏠' },
-              { name: 'sesi-soal-form-soal', label: 'Sesi Soal', icon: '📝' },
+              { name: 'sesi-soal', label: 'Sesi Soal', icon: '📝' },
+              { name: 'form-soal', label: 'Form Soal', icon: '📋' }
             ].map((item) => (
               <button
                 key={item.name}
