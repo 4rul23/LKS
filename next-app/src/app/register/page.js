@@ -1,9 +1,14 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function RegisterPage() {
+  const { register, isAuthenticated, user, loading } = useAuth();
+  const router = useRouter();
+  
   // Form state
   const [formData, setFormData] = useState({
     email: "",
@@ -14,6 +19,17 @@ export default function RegisterPage() {
     password: "",
   });
 
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect jika sudah login
+  useEffect(() => {
+    if (!loading && isAuthenticated()) {
+      const redirectPath = user?.role === 'admin' ? '/Admin/dashboard' : '/user';
+      router.push(redirectPath);
+    }
+  }, [loading, isAuthenticated, user, router]);
+
   // Handle form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -21,14 +37,58 @@ export default function RegisterPage() {
       ...prev,
       [name]: value,
     }));
+    // Clear error ketika user mulai mengetik
+    if (error) setError('');
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Registration attempt with:", formData);
-    // Implementasi registrasi sebenarnya akan masuk di sini
+    setError('');
+
+    // Basic validation
+    if (formData.password.length < 8) {
+      setError('Password minimal 8 karakter');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const registerData = {
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        phoneNumber: formData.phoneNumber,
+        birthDate: formData.birthDate,
+        school: formData.school,
+      };
+
+      const result = await register(registerData);
+      
+      if (!result.success) {
+        setError(result.error || 'Registrasi gagal. Silakan coba lagi.');
+      }
+      // Jika success, redirect akan otomatis dilakukan oleh AuthContext
+    } catch (err) {
+      setError('Terjadi kesalahan. Silakan coba lagi.');
+      console.error('Register error:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  // Show loading jika masih mengecek auth status
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Memuat...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
@@ -47,6 +107,13 @@ export default function RegisterPage() {
                   Silahkan lengkapi data dalam form berikut untuk membuat akun baru
                 </p>
               </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-700 text-sm">{error}</p>
+                </div>
+              )}
 
               <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
                 {/* Grid untuk form fields - responsive */}
@@ -68,6 +135,7 @@ export default function RegisterPage() {
                       className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                       placeholder="nama@example.com"
                       required
+                      disabled={isLoading}
                     />
                   </div>
 
@@ -88,6 +156,7 @@ export default function RegisterPage() {
                       className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                       placeholder="Masukkan nama lengkap"
                       required
+                      disabled={isLoading}
                     />
                   </div>
 
@@ -108,6 +177,7 @@ export default function RegisterPage() {
                       className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                       placeholder="08123456789"
                       required
+                      disabled={isLoading}
                     />
                   </div>
 
@@ -127,6 +197,7 @@ export default function RegisterPage() {
                       onChange={handleChange}
                       className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                       required
+                      disabled={isLoading}
                     />
                   </div>
 
@@ -147,6 +218,7 @@ export default function RegisterPage() {
                       className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                       placeholder="Nama sekolah"
                       required
+                      disabled={isLoading}
                     />
                   </div>
 
@@ -167,7 +239,10 @@ export default function RegisterPage() {
                       className="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                       placeholder="••••••••"
                       required
+                      disabled={isLoading}
+                      minLength={8}
                     />
+                    <p className="text-xs text-gray-500 mt-1">Minimal 8 karakter</p>
                   </div>
                 </div>
 
@@ -175,9 +250,17 @@ export default function RegisterPage() {
                 <div className="pt-4 sm:pt-6">
                   <button
                     type="submit"
-                    className="w-full sm:w-auto px-6 sm:px-8 py-2 sm:py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all text-sm sm:text-base"
+                    disabled={isLoading}
+                    className="w-full sm:w-auto px-6 sm:px-8 py-2 sm:py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Daftar Sekarang
+                    {isLoading ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Mendaftar...
+                      </div>
+                    ) : (
+                      'Daftar Sekarang'
+                    )}
                   </button>
                 </div>
 
@@ -197,7 +280,7 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {/* Right Column - Info & Help */}
+          {/* Right Column - Info & Help - tetap sama seperti desain asli */}
           <div className="xl:col-span-4 space-y-6">
             {/* Registration Info */}
             <section>

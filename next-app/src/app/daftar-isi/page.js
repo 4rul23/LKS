@@ -1,14 +1,125 @@
 "use client";
-import { useState } from "react";
-import Image from "next/image";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function MateriPage() {
   const [activeSection, setActiveSection] = useState(null);
+  const [quizzes, setQuizzes] = useState([]);
+  const [materiList, setMateriList] = useState([]);
+  const [selectedMateri, setSelectedMateri] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+
+  const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+
+  // Fetch daftar materi yang tersedia
+  useEffect(() => {
+    const fetchMateri = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/materi`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setMateriList(data.data);
+            // Set materi pertama sebagai default
+            if (data.data.length > 0) {
+              setSelectedMateri(data.data[0]);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching materi:", error);
+      }
+    };
+
+    fetchMateri();
+  }, []);
+
+  // Fetch quizzes berdasarkan materi yang dipilih
+  useEffect(() => {
+    const fetchQuizzes = async () => {
+      if (!user || !selectedMateri) return;
+
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("auth_token");
+
+        const response = await fetch(
+          `${API_BASE_URL}/quiz/materi/${selectedMateri.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setQuizzes(data.data);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching quizzes:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuizzes();
+  }, [user, selectedMateri]);
 
   // Toggle section visibility
   const toggleSection = (sectionId) => {
     setActiveSection(activeSection === sectionId ? null : sectionId);
+  };
+
+  // Handle quiz start
+  const handleStartQuiz = (quizId) => {
+    if (!user) {
+      alert("Silakan login terlebih dahulu untuk mengerjakan soal!");
+      router.push("/login");
+      return;
+    }
+
+    router.push(`/quiz/${quizId}`);
+  };
+
+  // Show login prompt for quiz section
+  const QuizLoginPrompt = () => (
+    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+      <p className="text-yellow-800 mb-3">
+        🔒 Silakan login untuk mengerjakan soal latihan
+      </p>
+      <Link
+        href="/login"
+        className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+      >
+        Login Sekarang
+      </Link>
+    </div>
+  );
+
+  // Get difficulty badge color
+  const getDifficultyColor = (difficulty) => {
+    switch (difficulty) {
+      case "mudah":
+        return "bg-green-100 text-green-700";
+      case "sedang":
+        return "bg-yellow-100 text-yellow-700";
+      case "sulit":
+        return "bg-red-100 text-red-700";
+      case "campuran":
+        return "bg-purple-100 text-purple-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
   };
 
   return (
@@ -22,172 +133,140 @@ export default function MateriPage() {
               {/* Header */}
               <div className="mb-6 sm:mb-8">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                    Bahasa Indonesia Kelas 2A
-                  </h1>
+                  <div>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                      {selectedMateri
+                        ? selectedMateri.judul_materi
+                        : "Materi Pembelajaran"}
+                    </h1>
+                    {selectedMateri && (
+                      <p className="text-lg text-gray-700 mt-1">
+                        {selectedMateri.judul_bab_materi}
+                      </p>
+                    )}
+                  </div>
                   <div className="flex items-center space-x-2 text-sm text-gray-500">
                     <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
                       Kelas 2A
                     </span>
+                    {user && (
+                      <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full font-medium">
+                        👤 {user.name}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <p className="text-gray-600 text-sm sm:text-base">
-                  Pelajari dasar-dasar bahasa Indonesia dengan materi yang mudah dipahami
+                  Pelajari materi pembelajaran dengan mudah dan kerjakan soal
+                  latihan untuk mengasah kemampuan.
+                  {!user && (
+                    <span className="block mt-2 text-amber-600 font-medium">
+                      📖 Materi dapat dibaca bebas, namun untuk mengerjakan soal
+                      diperlukan login.
+                    </span>
+                  )}
                 </p>
               </div>
 
-              <div className="space-y-6">
-                {/* BAB 1 Section */}
-                <div className="border border-gray-200 rounded-xl overflow-hidden">
-                  <button
-                    onClick={() => toggleSection('bab1')}
-                    className="w-full p-4 sm:p-6 bg-gray-50 hover:bg-gray-100 transition-all duration-200 text-left"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-1">
-                          BAB 1: Mengenal Huruf dan Kata
-                        </h2>
-                        <p className="text-sm text-gray-600">3 Sub-bab • 45 menit</p>
-                      </div>
-                      <svg
-                        className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
-                          activeSection === 'bab1' ? 'rotate-180' : ''
+              {/* Pilihan Materi */}
+              {materiList.length > 1 && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-3">Pilih Materi:</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {materiList.map((materi) => (
+                      <button
+                        key={materi.id}
+                        onClick={() => setSelectedMateri(materi)}
+                        className={`p-4 rounded-lg border-2 text-left transition-all ${
+                          selectedMateri?.id === materi.id
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-200 hover:border-blue-300 bg-white"
                         }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </div>
-                  </button>
-
-                  {activeSection === 'bab1' && (
-                    <div className="p-4 sm:p-6 space-y-6">
-                      {/* Sub-section 1.1 */}
-                      <div className="border-l-4 border-blue-400 pl-4 sm:pl-6">
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">
-                          1.1 Membaca Huruf dan Suku Kata
-                        </h3>
-                        <div className="text-gray-700 space-y-3 text-sm sm:text-base">
-                          <p>
-                            Huruf vokal terdiri dari lima macam, yaitu a, i, u, e, dan
-                            o. Jika digabungkan dengan huruf lain, huruf-huruf ini
-                            membentuk suku kata, seperti ba, bi, bu, be, dan bo.
-                          </p>
-                          <p>
-                            Suku kata bisa digunakan untuk membuat kata utuh seperti
-                            "buku" atau "bola".
-                          </p>
-                          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                            <h4 className="font-medium text-blue-800 mb-2">Contoh:</h4>
-                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center">
-                              {['ba', 'bi', 'bu', 'be', 'bo'].map((suku, index) => (
-                                <div key={index} className="p-2 bg-white rounded border text-blue-700 font-medium">
-                                  {suku}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Sub-section 1.2 */}
-                      <div className="border-l-4 border-green-400 pl-4 sm:pl-6">
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">
-                          1.2 Menyusun Huruf Menjadi Kata
-                        </h3>
-                        <div className="text-gray-700 space-y-3 text-sm sm:text-base">
-                          <p>
-                            Huruf-huruf yang tersusun dengan urutan yang benar akan
-                            membentuk kata yang memiliki arti. Misalnya, huruf b-u-k-u
-                            akan membentuk kata "buku", jika urutannya salah, kata
-                            tersebut tidak akan bermakna.
-                          </p>
-                          <div className="mt-4 p-3 bg-green-50 rounded-lg">
-                            <h4 className="font-medium text-green-800 mb-2">Latihan:</h4>
-                            <div className="space-y-2">
-                              <div className="flex flex-wrap gap-2 items-center">
-                                <span className="text-green-700">b + u + k + u =</span>
-                                <span className="px-3 py-1 bg-white rounded border font-medium">buku</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Sub-section 1.3 */}
-                      <div className="border-l-4 border-purple-400 pl-4 sm:pl-6">
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3">
-                          1.3 Menulis Kata dengan Huruf Tegak Bersambung
-                        </h3>
-                        <div className="text-gray-700 space-y-3 text-sm sm:text-base">
-                          <p>
-                            Huruf tegak bersambung adalah huruf yang ditulis sambung
-                            menyambung antar hurufnya. Kita bisa menulis kata seperti
-                            "rumah", "bunga", dan "ibu" dengan cara menyambung semua
-                            hurufnya agar terlihat rapi dan indah.
-                          </p>
-                          <div className="mt-4 p-3 bg-purple-50 rounded-lg">
-                            <h4 className="font-medium text-purple-800 mb-2">Tips Menulis:</h4>
-                            <ul className="list-disc list-inside space-y-1 text-purple-700">
-                              <li>Mulai dari kiri ke kanan</li>
-                              <li>Sambungkan setiap huruf dengan rapi</li>
-                              <li>Jaga jarak antar kata</li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* BAB 2 Section (Preview) */}
-                <div className="border border-gray-200 rounded-xl overflow-hidden opacity-60">
-                  <div className="p-4 sm:p-6 bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-1">
-                          BAB 2: Membaca Kalimat Sederhana
-                        </h2>
-                        <p className="text-sm text-gray-600">Segera hadir</p>
-                      </div>
-                      <span className="px-3 py-1 bg-gray-200 text-gray-500 rounded-full text-xs font-medium">
-                        Terkunci
-                      </span>
-                    </div>
+                        <h4 className="font-semibold text-gray-900">
+                          {materi.judul_materi}
+                        </h4>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {materi.judul_bab_materi}
+                        </p>
+                        <span
+                          className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-2 ${
+                            materi.status === "aktif"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {materi.status === "aktif" ? "Tersedia" : "Draft"}
+                        </span>
+                      </button>
+                    ))}
                   </div>
                 </div>
+              )}
 
-                {/* BAB 3 Section (Preview) */}
-                <div className="border border-gray-200 rounded-xl overflow-hidden opacity-60">
-                  <div className="p-4 sm:p-6 bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-1">
-                          BAB 3: Menulis Cerita Pendek
-                        </h2>
-                        <p className="text-sm text-gray-600">Segera hadir</p>
+              {/* Konten Materi */}
+              {selectedMateri && (
+                <div className="space-y-6">
+                  <div className="border border-gray-200 rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => toggleSection("materi")}
+                      className="w-full p-4 sm:p-6 bg-gray-50 hover:bg-gray-100 transition-all duration-200 text-left"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-1">
+                            {selectedMateri.judul_bab_materi}
+                          </h2>
+                          <p className="text-sm text-gray-600">
+                            Materi Pembelajaran •{" "}
+                            {selectedMateri.tanggal_dibuat}
+                          </p>
+                        </div>
+                        <svg
+                          className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
+                            activeSection === "materi" ? "rotate-180" : ""
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
                       </div>
-                      <span className="px-3 py-1 bg-gray-200 text-gray-500 rounded-full text-xs font-medium">
-                        Terkunci
-                      </span>
-                    </div>
+                    </button>
+
+                    {activeSection === "materi" && (
+                      <div className="p-4 sm:p-6">
+                        <div className="prose max-w-none">
+                          <div
+                            className="text-gray-700 leading-relaxed"
+                            dangerouslySetInnerHTML={{
+                              __html: selectedMateri.isi_bab_materi,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Footer */}
               <div className="mt-8 sm:mt-12 pt-6 border-t border-gray-100">
                 <div className="flex flex-col sm:flex-row justify-between items-center text-sm space-y-2 sm:space-y-0">
-                  <div className="text-gray-500">© 2023 Learning Management System</div>
-                  <div className="text-gray-500">Bahasa Indonesia Kelas 2A</div>
+                  <div className="text-gray-500">
+                    © 2025 SIGMEA - Sistem Informasi Manajemen Sekolah
+                  </div>
+                  <div className="text-gray-500">
+                    {selectedMateri
+                      ? selectedMateri.judul_materi
+                      : "Materi Pembelajaran"}
+                  </div>
                 </div>
               </div>
             </div>
@@ -197,108 +276,145 @@ export default function MateriPage() {
           <div className="xl:col-span-4 space-y-6">
             {/* Soal Latihan Section */}
             <section>
-              <h2 className="text-xl font-bold text-black mb-4 sm:mb-6">Soal Latihan</h2>
-              
+              <h2 className="text-xl font-bold text-black mb-4 sm:mb-6">
+                Soal Latihan
+              </h2>
+
               <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-100/50 p-4 sm:p-6">
-                <div className="space-y-4">
-                  {[
-                    {
-                      title: "Latihan Mengenal Huruf",
-                      description: "10 soal pilihan ganda",
-                      difficulty: "Mudah",
-                      color: "bg-green-100 text-green-700"
-                    },
-                    {
-                      title: "Menyusun Kata",
-                      description: "8 soal praktik",
-                      difficulty: "Sedang",
-                      color: "bg-yellow-100 text-yellow-700"
-                    },
-                    {
-                      title: "Menulis Tegak Bersambung",
-                      description: "5 soal menulis",
-                      difficulty: "Mudah",
-                      color: "bg-green-100 text-green-700"
-                    }
-                  ].map((quiz, index) => (
-                    <div key={index} className="group">
-                      <div className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all cursor-pointer">
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="font-semibold text-gray-900 group-hover:text-black text-sm">
-                            {quiz.title}
-                          </h3>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${quiz.color}`}>
-                            {quiz.difficulty}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-600 mb-3">{quiz.description}</p>
-                        <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-all">
-                          Mulai Latihan
-                        </button>
+                {!user ? (
+                  <QuizLoginPrompt />
+                ) : !selectedMateri ? (
+                  <div className="text-center py-4 text-gray-500">
+                    <p className="text-sm">Pilih materi terlebih dahulu</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {loading ? (
+                      <div className="text-center py-4">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                        <p className="mt-2 text-sm text-gray-600">
+                          Memuat soal latihan...
+                        </p>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
+                    ) : quizzes.length > 0 ? (
+                      <>
+                        <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                          <p className="text-sm text-blue-800 font-medium">
+                            📚 {selectedMateri.judul_bab_materi}
+                          </p>
+                          <p className="text-xs text-blue-600">
+                            {quizzes.length} jenis latihan tersedia
+                          </p>
+                        </div>
 
-            {/* Popular Section */}
-            <section>
-              <h2 className="text-xl font-bold text-black mb-4 sm:mb-6">Popular</h2>
-
-              <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-100/50 p-4 sm:p-6">
-                <ul className="space-y-3 sm:space-y-4">
-                  {[
-                    "Bahasa Indonesia Kelas 5A",
-                    "Bahasa Indonesia Kelas 2A",
-                    "Matematika Kelas 6",
-                    "Matematika Kelas 5A",
-                  ].map((item, index) => (
-                    <li key={index} className="group">
-                      <Link
-                        href="#"
-                        className="block p-2 sm:p-3 rounded-lg hover:bg-gray-50 transition-all"
-                      >
-                        <span className="text-gray-900 font-medium group-hover:text-black transition-colors text-sm">
-                          {item}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                        {quizzes.map((quiz, index) => (
+                          <div key={quiz.id} className="group">
+                            <div className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all">
+                              <div className="flex justify-between items-start mb-2">
+                                <h3 className="font-semibold text-gray-900 group-hover:text-black text-sm">
+                                  {quiz.title}
+                                </h3>
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(
+                                    quiz.difficulty
+                                  )}`}
+                                >
+                                  {quiz.difficulty === "campuran"
+                                    ? "Campuran"
+                                    : quiz.difficulty.charAt(0).toUpperCase() +
+                                      quiz.difficulty.slice(1)}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-600 mb-2">
+                                {quiz.description}
+                              </p>
+                              <p className="text-xs text-gray-500 mb-3">
+                                {quiz.total_questions} soal • {quiz.time_limit}{" "}
+                                menit
+                                {quiz.available_questions && (
+                                  <span className="ml-2 text-green-600">
+                                    • {quiz.available_questions} soal tersedia
+                                  </span>
+                                )}
+                              </p>
+                              <button
+                                onClick={() => handleStartQuiz(quiz.id)}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-all"
+                              >
+                                Mulai Latihan
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <div className="text-center py-6 text-gray-500">
+                        <div className="mb-3">📝</div>
+                        <p className="text-sm font-medium mb-1">
+                          Belum ada soal latihan
+                        </p>
+                        <p className="text-xs">
+                          Soal latihan akan muncul setelah admin menambahkan
+                          soal untuk materi ini
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </section>
 
             {/* Progress Section */}
             <section>
-              <h2 className="text-xl font-bold text-black mb-4 sm:mb-6">Progress Belajar</h2>
-              
+              <h2 className="text-xl font-bold text-black mb-4 sm:mb-6">
+                Progress Belajar
+              </h2>
+
               <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-blue-100/50 p-4 sm:p-6">
                 <div className="space-y-4">
                   <div className="text-center">
                     <div className="w-20 h-20 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-3">
-                      <span className="text-2xl font-bold text-blue-600">33%</span>
+                      <span className="text-2xl font-bold text-blue-600">
+                        {selectedMateri && materiList.length > 0
+                          ? Math.round((1 / materiList.length) * 100)
+                          : 0}
+                        %
+                      </span>
                     </div>
-                    <p className="text-sm text-gray-600">BAB 1 Selesai</p>
+                    <p className="text-sm text-gray-600">
+                      {selectedMateri ? "Materi Dibaca" : "Belum Dimulai"}
+                    </p>
                   </div>
-                  
+
                   <div className="space-y-3">
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">Materi dibaca</span>
-                      <span className="font-medium">1/3</span>
+                      <span className="text-gray-600">Materi tersedia</span>
+                      <span className="font-medium">{materiList.length}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full" style={{width: '33%'}}></div>
+                      <div
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                        style={{
+                          width: selectedMateri
+                            ? `${(1 / Math.max(materiList.length, 1)) * 100}%`
+                            : "0%",
+                        }}
+                      ></div>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-3">
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">Latihan selesai</span>
-                      <span className="font-medium">0/3</span>
+                      <span className="text-gray-600">Quiz tersedia</span>
+                      <span className="font-medium">{quizzes.length}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-green-600 h-2 rounded-full" style={{width: '0%'}}></div>
+                      <div
+                        className="bg-green-600 h-2 rounded-full transition-all duration-500"
+                        style={{
+                          width: quizzes.length > 0 ? "100%" : "0%",
+                        }}
+                      ></div>
                     </div>
                   </div>
                 </div>
