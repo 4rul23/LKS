@@ -76,13 +76,12 @@ export default function UserDashboardPage() {
             </div>
           </div>
 
-          {/* Navigation Menu */}
+          {/* Navigation Menu - Simplified */}
           <nav className="space-y-2 mb-6">
             {[
               { name: 'dashboard', label: 'Dashboard', icon: '🏠' },
-              { name: 'materi', label: 'Materi', icon: '📚' },
-              { name: 'nilai', label: 'Nilai', icon: '📊' },
-              { name: 'pengaturan', label: 'Pengaturan', icon: '⚙️' }
+              { name: 'sesi-soal', label: 'Sesi Soal', icon: '📝' },
+              { name: 'form-soal', label: 'Form Soal', icon: '📋' }
             ].map((item) => (
               <button
                 key={item.name}
@@ -108,7 +107,7 @@ export default function UserDashboardPage() {
 
       {/* Main Content */}
       <div className="ml-72 flex-1">
-        {/* Header */}
+        {/* Header - Simplified */}
         <header className="bg-white shadow-sm px-8 py-4 border-b border-gray-200 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div>
@@ -116,9 +115,9 @@ export default function UserDashboardPage() {
               <p className="text-sm text-gray-500">Selamat datang, {userData.name.split(' ')[0]}!</p>
             </div>
 
-            <div className="flex items-center space-x-5">
+            <div className="flex items-center">
               {/* Search Bar */}
-              <div className="relative hidden md:block">
+              <div className="relative">
                 <input
                   type="text"
                   placeholder="Cari materi..."
@@ -128,19 +127,6 @@ export default function UserDashboardPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-
-              {/* Notification Button */}
-              <button className="relative flex h-10 w-10 bg-gray-100 hover:bg-gray-200 rounded-full items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-                <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white"></span>
-              </button>
-
-              {/* Profile Button */}
-              <button className="h-10 w-10 bg-blue-50 rounded-full border-2 border-blue-100 flex items-center justify-center">
-                <span className="text-blue-600">👤</span>
-              </button>
             </div>
           </div>
         </header>
@@ -174,114 +160,46 @@ export default function UserDashboardPage() {
             </div>
           </div>
 
-          {/* Main Dashboard Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Left Column */}
-            <div className="lg:col-span-1 space-y-6">
-              {/* Learning Resources */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-                <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
-                  <h3 className="font-medium text-gray-800">Sumber Belajar</h3>
-                </div>
-                <div className="p-4">
-                  <ul className="space-y-3">
-                    <li><a href="#" className="flex items-center text-blue-600 hover:underline"><span className="mr-2">📗</span>Buku Digital</a></li>
-                    <li><a href="#" className="flex items-center text-blue-600 hover:underline"><span className="mr-2">🔊</span>Audio Pembelajaran</a></li>
-                    <li><a href="#" className="flex items-center text-blue-600 hover:underline"><span className="mr-2">🎮</span>Game Edukasi</a></li>
-                    <li><a href="#" className="flex items-center text-blue-600 hover:underline"><span className="mr-2">🎬</span>Video Tutorial</a></li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Calendar */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-                <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
-                  <h3 className="font-medium text-gray-800">Kalender Akademik</h3>
-                </div>
-                <div className="p-4">
-                  <div className="text-center text-gray-500 mb-3">Juni 2025</div>
-                  <div className="grid grid-cols-7 gap-1">
-                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                      <div key={i} className="text-center text-xs font-medium text-gray-500 py-1">{day}</div>
-                    ))}
-                    {[...Array(30)].map((_, i) => (
-                      <div key={i} className={`text-center py-1 text-xs rounded-full ${i === 9 ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700'}`}>
-                        {i + 1}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+          {/* Course Progress */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+            <div className="px-4 py-3 border-b border-gray-100 flex justify-between">
+              <h3 className="font-medium text-gray-800">Progress Pembelajaran</h3>
+              <button className="text-blue-600 text-sm hover:underline">Lihat Semua</button>
             </div>
-
-            {/* Right Column */}
-            <div className="lg:col-span-3 space-y-6">
-              {/* Course Progress */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-                <div className="px-4 py-3 border-b border-gray-100 flex justify-between">
-                  <h3 className="font-medium text-gray-800">Progress Pembelajaran</h3>
-                  <button className="text-blue-600 text-sm hover:underline">Lihat Semua</button>
-                </div>
-                <div className="p-4 space-y-4">
-                  {userData.courses.map((course) => (
-                    <div key={course.id} className="bg-white rounded-lg p-4 border border-gray-100">
-                      <div className="flex justify-between mb-3">
-                        <div>
-                          <h4 className="font-semibold text-gray-900">{course.name}</h4>
-                          <p className="text-sm text-gray-600">{course.class}</p>
-                        </div>
-                        <div className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                          {Math.round((course.completed / course.total) * 100)}% Selesai
-                        </div>
-                      </div>
-
-                      <div className="mb-3">
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-blue-600 h-2 rounded-full"
-                            style={{ width: `${(course.completed / course.total) * 100}%` }}
-                          ></div>
-                        </div>
-                        <div className="flex justify-between text-xs text-gray-500 mt-1">
-                          <span>Progress</span>
-                          <span>{course.completed} dari {course.total} materi</span>
-                        </div>
-                      </div>
-
-                      <Link
-                        href={`/materi/${course.id}`}
-                        className="px-4 py-2 bg-blue-50 text-blue-700 font-medium rounded-lg text-sm inline-block"
-                      >
-                        Lanjutkan Belajar
-                      </Link>
+            <div className="p-4 space-y-4">
+              {userData.courses.map((course) => (
+                <div key={course.id} className="bg-white rounded-lg p-4 border border-gray-100">
+                  <div className="flex justify-between mb-3">
+                    <div>
+                      <h4 className="font-semibold text-gray-900">{course.name}</h4>
+                      <p className="text-sm text-gray-600">{course.class}</p>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Latest Materials */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-                <div className="px-4 py-3 border-b border-gray-100 flex justify-between">
-                  <h3 className="font-medium text-gray-800">Materi Terbaru</h3>
-                  <button className="text-blue-600 text-sm hover:underline">Lihat Semua</button>
-                </div>
-                <div className="p-4">
-                  <div className="flex flex-col lg:flex-row gap-4">
-                    {[1, 2].map((item) => (
-                      <div key={item} className="flex-1 bg-gray-50 rounded-lg p-4 border border-gray-100">
-                        <h4 className="font-medium text-gray-800">Pelajaran {item}: Membaca Dongeng</h4>
-                        <p className="text-sm text-gray-600 mt-1 mb-3">Bahasa Indonesia Kelas 2A</p>
-                        <button className="text-blue-600 text-sm hover:underline flex items-center">
-                          <span>Mulai Belajar</span>
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
+                    <div className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                      {Math.round((course.completed / course.total) * 100)}% Selesai
+                    </div>
                   </div>
+
+                  <div className="mb-3">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-blue-600 h-2 rounded-full"
+                        style={{ width: `${(course.completed / course.total) * 100}%` }}
+                      ></div>
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>Progress</span>
+                      <span>{course.completed} dari {course.total} materi</span>
+                    </div>
+                  </div>
+
+                  <Link
+                    href={`/materi/${course.id}`}
+                    className="px-4 py-2 bg-blue-50 text-blue-700 font-medium rounded-lg text-sm inline-block"
+                  >
+                    Lanjutkan Belajar
+                  </Link>
                 </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
